@@ -1,0 +1,41 @@
+void main() {
+  String? nickname;
+  print(nickname!);
+}
+
+output:
+// Error: Unexpected null value., error: Error: Unexpected null value.
+
+----------------------------------------------------------------------
+void main() {
+  String? nickname = 'sd';
+  print(nickname ?? "DF");
+}
+
+shows warning left operand cannot be null so that the right operand cannot be executed
+
+----------------------------------------------------------------------
+void main() {
+  String? nickname;
+  print(nickname ?? "DF");
+}
+
+this doesn't show warning
+----------------------------------------------------------------------
+void main() {
+  String? nickname;
+  print(nickname != null ? "sdf" : "sdf");
+}
+
+// warning the operant must be null so the condition always false 
+-----------------------------------------------------------------------
+
+String? getnickname()
+{
+  return 'sdf';
+}
+
+void main() {
+  String? nickname = getnickname();
+  print(nickname ?? "sdf"); // Output: John
+}
