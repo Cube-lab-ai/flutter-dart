@@ -1,0 +1,292 @@
+	void main()
+	{
+    Stream<int> numberStream = Stream.fromIterable([1, 2, 3]);
+
+    Stream<int> doubledStream = numberStream.map((number) => number * 2);
+     
+    print(numberStream);
+    print(doubledStream);
+    numberStream.listen(print);
+    doubledStream.listen(print);
+  }
+
+  // -------------------------------------------
+
+	Stream<int> numberStream() async* {
+	  yield 1;
+	  await Future.delayed(Duration(seconds: 1));
+	  yield 2;
+	  await Future.delayed(Duration(seconds: 1));
+	  yield 3;
+	}
+
+	void main()
+	{ 
+	  numberStream().listen((value) {
+		print('Got value: $value');
+	  });
+	}
+
+  // ----------------------------------------------
+
+// explanation how below code works
+
+	Stream<List<Post>> fetchAllPosts() {
+	  return FirebaseFirestore.instance
+		  .collection('posts')
+		  .orderBy('timestamp', descending: true)
+		  .snapshots()
+		  .map((snapshot) =>
+			  snapshot.docs.map((doc) => Post.fromDoc(doc)).toList());
+	}
+
+// Here’s a clear, simple explanation of how your fetchAllPosts() function works, step by step
+
+🔍 Step-by-step Breakdown
+### 1. FirebaseFirestore.instance.collection('posts')
+This selects the posts collection from Firebase Firestore.
+
+2. .orderBy('timestamp', descending: true)
+This sorts the documents by the field timestamp.
+descending: true → newest posts first.
+
+3. .snapshots()
+This turns the query into a Stream<QuerySnapshot>—
+meaning Firestore will send updates in real-time whenever the posts collection changes.
+So instead of fetching data once, you stay subscribed to updates.
+
+4. .map((snapshot) => snapshot.docs.map((doc) => Post.fromDoc(doc)).toList())
+This converts Firestore documents into your custom Post model.
+
+Breakdown:
+snapshot.docs → all documents in the query result
+.map((doc) => Post.fromDoc(doc)) → convert each doc to a Post
+.toList() → convert the mapped items into a list
+
+So the final output becomes:
+Stream<List<Post>>
+
+
+You're getting a stream of QuerySnapshot objects from Firestore.
+
+// a single query snapshot contains multiple post 
+
+🔄 Example:
+
+Let's say the stream emits this over time:
+
+🔹 First emission:
+
+	QuerySnapshot:
+	- Post 1
+	- Post 2
+
+🔹 Then someone adds Post 3 → next emission:
+
+	QuerySnapshot:
+	- Post 1
+	- Post 2
+	- Post 3
+
+Each time something changes in the 'posts' collection (like adding, editing, or deleting a post), a new QuerySnapshot is emitted in the stream.
+
+✅ Summary
+
+	✔️ Yes, every QuerySnapshot in the stream can contain multiple posts.
+
+	🔁 Every time Firestore updates the collection, a new QuerySnapshot is emitted.
+
+	📦 You can access the individual posts using snapshot.docs.
+
+// ---------------------------------------------------------------	
+
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await FirebaseAuth.instance.signInAnonymously(); // auto login for practice
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Simple Firebase Posts',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const PostPage(),
+    );
+  }
+}
+
+// ------------------- POST MODEL ----------------------------------
+class Post {
+  final String uid;
+  final String userId;
+  final String text;
+  final String imageUrl;
+  final DateTime timestamp;
+
+  Post({
+    required this.uid,
+    required this.userId,
+    required this.text,
+    required this.imageUrl,
+    required this.timestamp,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'uid': uid,
+      'userId': userId,
+      'text': text,
+      'imageUrl': imageUrl,
+      'timestamp': Timestamp.fromDate(timestamp),
+    };
+  }
+
+  factory Post.fromDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Post(
+      uid: doc.id,
+      userId: data['userId'] ?? '',
+      text: data['text'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      timestamp: (data['timestamp'] as Timestamp).toDate(),
+    );
+  }
+}
+
+// ------------------- FIREBASE HELPERS -------------------
+Future<void> uploadPost(String text, {String imageUrl = ''}) async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  final postRef = FirebaseFirestore.instance.collection('posts').doc();
+
+  final post = Post(
+    uid: postRef.id,
+    userId: user.uid,
+    text: text,
+    imageUrl: imageUrl,
+    timestamp: DateTime.now(),
+  );
+
+  await postRef.set(post.toMap());
+}
+
+Stream<List<Post>> fetchAllPosts() {
+  return FirebaseFirestore.instance
+      .collection('posts')
+      .orderBy('timestamp', descending: true)
+      .snapshots()
+      .map((snapshot) =>
+          snapshot.docs.map((doc) => Post.fromDoc(doc)).toList());
+}
+
+// ------------------- UI -------------------
+class PostPage extends StatefulWidget {
+  const PostPage({super.key});
+
+  @override
+  State<PostPage> createState() => _PostPageState();
+}
+
+class _PostPageState extends State<PostPage> {
+  final _controller = TextEditingController();
+  final String practiceImageUrl =
+      "https://images.pexels.com/photos/33517759/pexels-photo-33517759.jpeg";
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Firebase Posts")),
+      body: Column(
+        children: [
+          // Input field + button
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: const InputDecoration(
+                      hintText: "Write something...",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () async {
+                    if (_controller.text.trim().isNotEmpty) {
+                      await uploadPost(
+                        _controller.text.trim(),
+                        imageUrl: practiceImageUrl,
+                      );
+                      _controller.clear();
+                    }
+                  },
+                  child: const Text("Post"),
+                ),
+              ],
+            ),
+          ),
+          const Divider(),
+
+          // Feed
+          Expanded(
+            child: StreamBuilder<List<Post>>(
+              stream: fetchAllPosts(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final posts = snapshot.data!;
+                if (posts.isEmpty) {
+                  return const Center(child: Text("No posts yet."));
+                }
+
+                return ListView.builder(
+                  itemCount: posts.length,
+                  itemBuilder: (context, index) {
+                    final post = posts[index];
+                    return Card(
+                      margin: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            title: Text("User: ${post.userId}"),
+                            subtitle: Text(post.text),
+                            trailing: Text(
+                              post.timestamp
+                                  .toLocal()
+                                  .toString()
+                                  .substring(0, 16),
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                          ),
+                          if (post.imageUrl.isNotEmpty)
+                            Image.network(post.imageUrl),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
