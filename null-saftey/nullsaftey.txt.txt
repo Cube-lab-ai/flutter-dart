@@ -39,3 +39,28 @@ void main() {
   String? nickname = getnickname();
   print(nickname ?? "sdf"); // Output: John
 }
+
+
+// ----------------------------------------------------------------------
+class Features {
+  String? premiumFeatures1;
+  String? premiumFeatures2;
+  Features({this.premiumFeatures1, this.premiumFeatures2});
+}
+
+class Settings {
+  Features? features;
+  Settings({this.features});
+}
+
+class App {
+  final Settings settings;
+  App({required this.settings});
+}
+
+void main() {
+  App app = App(
+    settings: Settings(features: Features(premiumFeatures1: 'helo')),
+  );
+  print(app.settings.features!.premiumFeatures1);
+}
