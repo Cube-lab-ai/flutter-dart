@@ -1,0 +1,108 @@
+
+2️⃣ DateFormat().parse()
+What it does
+Parses a custom-formatted string into a DateTime using the pattern you specify.
+
+Example
+DateTime dt =
+    DateFormat("dd/MM/yyyy HH:mm:ss")
+        .parse("24/12/2023 15:30:00");
+
+print(dt);
+
+
+
+void main() {
+  // format the current data & time using intl package
+  // here month and hours alone capital
+  DateTime now = DateTime.now();
+  String formatted = DateFormat("yyyy-MM-dd HH:mm:ss").format(now);
+  print(formatted);
+
+  // Add and subtract days from the current date.
+  DateTime today = DateTime.now();
+  DateTime tomorrowDate = today.add(Duration(days: 1));
+  print(tomorrowDate);
+
+  // Compare two DateTime objects to check which one comes before or after the other.
+  print(DateTime.now().isAfter(DateTime.now().add(Duration(days: 1))));
+  print(DateTime.now().isBefore(DateTime.now().add(Duration(days: 1))));
+
+  // Parse a date string into a DateTime object using error handling.
+  String dateString = "2023-12-4T15:30:00";
+  try {
+    DateTime dateStringtoDateTime = DateTime.parse(dateString);
+  } catch (e) {
+    // If it's not ISO 8601, try a custom format
+    try {
+      DateFormat format = DateFormat(
+        "dd-MM-yyyy HH:mm",
+      ); // Custom format (adjust as needed)
+      DateTime parsedDate = format.parse(dateString);
+      print(parsedDate);
+    } catch (e) {
+      print("Error parsing date with custom format: $e");
+      return null;
+    }
+  }
+}
+
+
+// Simulate an API response
+import 'dart:convert'; // For JSON decoding
+
+void main() {
+  String jsonResponse = '{"name": "John Doe", "dob": "2023-12-24T15:30:00"}';
+
+  // Parse JSON response
+  Map<String, dynamic> data = jsonDecode(jsonResponse);
+
+  print(data);
+
+  // Fetch the date string from the API response
+  String? dateStr = data['dob']; // This might be null or have different formats
+
+  // Safe DateTime parsing
+  DateTime? parsedDate = DateTime.parse(dateStr!);
+
+  if (parsedDate != null) {
+    print('Parsed Date: $parsedDate');
+  } else {
+    print('Invalid or missing date.');
+  }
+}
+
+
+// // Function to safely parse a date string
+import 'package:intl/intl.dart';
+
+DateTime? parseDate(String? dateStr) {
+  if (dateStr == null || dateStr.isEmpty) {
+    print("Date string is null or empty.");
+    return null;
+  }
+
+  try {
+    // Try parsing ISO 8601 format (default format returned by most APIs)
+    DateTime parsedDate = DateTime.parse(dateStr);
+    return parsedDate;
+  } catch (e) {
+    print("Error parsing date in ISO 8601 format: $e");
+    // If it's not ISO 8601, try a custom format
+    try {
+      DateFormat format = DateFormat(
+        "dd-MM-yyyy HH:mm",
+      ); // Custom format (adjust as needed)
+      DateTime parsedDate = format.parse(dateStr);
+      return parsedDate;
+    } catch (e) {
+      print("Error parsing date with custom format: $e");
+      return null;
+    }
+  }
+}
+
+void main() {
+  DateTime? datetime = parseDate("2023-12-04T15:30:00");
+  print(datetime);
+}
