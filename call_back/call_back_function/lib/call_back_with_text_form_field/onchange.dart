@@ -1,29 +1,5 @@
 import 'package:flutter/material.dart';
 
-class CustomTextFormField extends StatelessWidget {
-  final Function(String) onTextTyped; // renamed for clarity
-  final String hint;
-
-  const CustomTextFormField({
-    super.key,
-    required this.onTextTyped,
-    required this.hint,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      decoration: InputDecoration(
-        labelText: hint,
-        border: OutlineInputBorder(),
-      ),
-      onChanged: (value) {
-        onTextTyped(value); // clearly calls parent function
-      },
-    );
-  }
-}
-
 class LiveTextScreen extends StatefulWidget {
   const LiveTextScreen({super.key});
 
@@ -64,3 +40,29 @@ class _LiveTextScreenState extends State<LiveTextScreen> {
     );
   }
 }
+
+
+class CustomTextFormField extends StatelessWidget {
+  final Function(String) onTextTyped; // renamed for clarity
+  final String hint;
+
+  const CustomTextFormField({
+    super.key,
+    required this.onTextTyped,
+    required this.hint,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      decoration: InputDecoration(
+        labelText: hint,
+        border: OutlineInputBorder(),
+      ),
+      onChanged: (value) {
+        onTextTyped(value); // clearly calls parent function
+      },
+    );
+  }
+}
+
