@@ -1,3 +1,4 @@
+// static runs only once
 class Log {
   int a = 34;
   Log.internal();
@@ -82,4 +83,5 @@ void main() {
   print(identical(a, b)); // true
 
   final log = Log.internal();
+  print(log.a);
 }
